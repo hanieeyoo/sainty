@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>St. Angela — Prayer & Devotion</title>
+  <meta name="description" content="A small devotional webpage for St. Angela with a responsive layout: image on the left, prayer on the right." />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="site-header">
+      <div class="brand">
+        <img src="./images/icon-cross.svg" alt="cross icon" width="40" height="40" style="filter:grayscale(0.2)">
+        <div>
+          <h1>St. Angela of Consolation</h1>
+          <p>Patron of hope, comfort and the weary-hearted</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="readBtn" title="Read prayer aloud">🔊 Read Aloud</button>
+        <button class="btn" id="copyBtn" title="Copy prayer to clipboard">📋 Copy</button>
+        <button class="btn" id="printBtn" title="Print page">🖨 Print</button>
+      </div>
+    </header>
+
+    <main class="card" role="main">
+      <section class="portrait" aria-labelledby="portrait-title">
+        <figure>
+          <img src="images/saint.jpg" alt="Portrait of St. Angela of Consolation" id="saintImg">
+        </figure>
+        <div class="caption">
+          <div id="portrait-title">St. Angela — Comforter of Souls</div>
+          <small>Image path: <code>./images/saint.jpg</code> — replace with your preferred image (JPEG/PNG).</small>
+        </div>
+      </section>
+
+      <aside class="prayer" aria-labelledby="prayer-title">
+        <div class="meta">
+          <div>
+            <h2 id="prayer-title">Prayer to St. Angela of Consolation</h2>
+            <p class="lead">A short prayer for comfort, guidance, and inner peace.</p>
+          </div>
+        </div>
+
+        <div class="text" id="prayerText" tabindex="0">
+          <p>
+O Saint Angela Malutao,
+Faithful guardian of every signal,
+Protector of all who work, study, and connect online,
+You who bring calm in the chaos of loading screens,
+And peace when the world seems lost in endless scrolling —
+Be our guide in this digital age.
+
+Bless our connections, that they may serve love and truth.
+Grant us patience when the Wi-Fi lags,
+Wisdom when we share our thoughts,
+And kindness when we speak through messages unseen.
+
+Shield us from falsehood, envy, and division
+That may hide behind bright screens.
+Help us use technology not for vanity,
+But to spread hope, learning, and compassion.
+
+When our signal falters, remind us to pause —
+To reconnect with You,
+The source of all light, understanding, and peace.
+Through your gentle intercession,
+May the internet become a web of unity and care.
+
+Saint Angela Malutao, guide our clicks with purpose,
+Our words with truth, and our hearts with grace.
+Amen.</p>
+          <p style="margin-top:12px"><strong>Short Litany:</strong><br>
+          St. Angela, pray for us. St. Angela, bring us solace. St. Angela, guide our hearts toward hope.</p>
+        </div>
+
+        <div class="tools">
+          <label for="voiceSelect" class="sr-only">Voice</label>
+          <select id="voiceSelect" title="Select voice" aria-label="Select voice"></select>
+          <label for="rate" class="sr-only">Rate</label>
+          <input id="rate" type="range" min="0.5" max="1.8" step="0.1" value="1" title="Reading rate">
+          <button class="btn" id="pauseBtn">⏸ Pause</button>
+          <button class="btn" id="stopBtn">⏹ Stop</button>
+        </div>
+
+        <footer class="attribution">Made with GIN BANGAG • jpg</footer>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const prayerEl = document.getElementById('prayerText');
+    const copyBtn = document.getElementById('copyBtn');
+    const printBtn = document.getElementById('printBtn');
+    const readBtn = document.getElementById('readBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const rate = document.getElementById('rate');
+
+    copyBtn.addEventListener('click', async ()=>{
+      try{
+        await navigator.clipboard.writeText(prayerEl.innerText.trim());
+        copyBtn.textContent = '✅ Copied';
+        setTimeout(()=> copyBtn.textContent = '📋 Copy',1200);
+      } catch (e){
+        alert('Unable to copy. Select text and press Ctrl+C.');
+      }
+    });
+
+    printBtn.addEventListener('click', ()=> window.print());
+
+    let synth = window.speechSynthesis;
+    let utter;
+    let voices = [];
+
+    function populateVoices(){
+      voices = synth.getVoices() || [];
+      voiceSelect.innerHTML = '';
+      voices.forEach((v,i)=>{
+        const opt = document.createElement('option');
+        opt.value = i; opt.textContent = `${v.name} (${v.lang})`;
+        voiceSelect.appendChild(opt);
+      });
+    }
+    populateVoices();
+    if(speechSynthesis.onvoiceschanged !== undefined){
+      speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    readBtn.addEventListener('click', ()=>{
+      if(synth.speaking) return;
+      utter = new SpeechSynthesisUtterance(prayerEl.innerText.trim());
+      const selected = voiceSelect.value;
+      if(voices[selected]) utter.voice = voices[selected];
+      utter.rate = parseFloat(rate.value) || 1;
+      synth.speak(utter);
+    });
+
+    pauseBtn.addEventListener('click', ()=>{
+      if(!synth) return;
+      if(synth.speaking && !synth.paused){ synth.pause(); pauseBtn.textContent='▶ Resume'; }
+      else if(synth.paused){ synth.resume(); pauseBtn.textContent='⏸ Pause'; }
+    });
+
+    stopBtn.addEventListener('click', ()=>{
+      if(synth.speaking || synth.paused){ synth.cancel(); }
+    });
+
+    prayerEl.addEventListener('keydown', (e)=>{
+      if(e.ctrlKey && e.key.toLowerCase() === 'enter'){
+        copyBtn.click();
+      }
+    });
+
+    const img = document.getElementById('saintImg');
+    img.addEventListener('error', ()=>{
+      img.src = 'images/placeholder.png';
+      img.alt = 'Placeholder image — please add images/saint.jpg to the folder.';
+    });
+  </script>
+</body>
+</html>
